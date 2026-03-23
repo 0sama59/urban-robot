@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title id="page-title">Lunaglow — About</title>
+
+  <!-- Icons & Fonts -->
+  <link rel="icon" href="/pictures/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --white: #ffffff;
+      --pink: #ff8fb1;
+      --pink-soft: #fff0f6;
+      --pink-dark: #e07a99;
+      --black: #1c1c1c;
+      --gray: #777777;
+      --border: rgba(0,0,0,.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', 'Noto Sans Arabic', sans-serif; background: var(--white); color: var(--black); line-height: 1.6; }
+    
+    .about-container { max-width: 900px; margin: 0 auto; padding: 80px 20px; }
+    .about-header { text-align: center; margin-bottom: 60px; }
+    .about-header h2 { font-size: 3.5rem; margin-bottom: 20px; color: var(--black); font-weight: 700; }
+    
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-bottom: 100px; }
+    .about-text h3 { font-size: 2rem; margin-bottom: 20px; color: var(--pink); font-weight: 600; }
+    .about-text p { margin-bottom: 20px; color: var(--gray); font-size: 1.1rem; }
+    
+    .about-img { background: var(--pink-soft); border-radius: 40px; height: 450px; display: flex; align-items: center; justify-content: center; font-size: 8rem; transition: transform 0.3s ease; }
+    .about-img:hover { transform: scale(1.02); }
+
+    .btn-shop { background: var(--pink); color: var(--white); padding: 14px 35px; border-radius: 50px; font-weight: 600; display: inline-block; transition: 0.3s; }
+    .btn-shop:hover { background: var(--pink-dark); transform: translateY(-2px); }
+
+    @media (max-width: 768px) { 
+      .about-header h2 { font-size: 2.5rem; }
+      .about-grid { grid-template-columns: 1fr; gap: 40px; }
+      .about-img { height: 300px; order: -1; }
+    }
+    nav { 
+      background: rgba(255, 255, 255, 0.9); 
+      backdrop-filter: blur(15px); 
+      position: sticky; top: 0; z-index: 1000; 
+      border-bottom: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <nav class="py-4 px-6 md:px-12 flex justify-between items-center ">
+    <div class="flex items-center gap-10">
+      <h1 class="text-2xl font-bold text-pink tracking-tight">Lunaglow</h1>
+      <div class="hidden md:flex gap-8 text-sm font-medium text-gray-500">
+        <a href="/index.html" data-t="nav_shop" class="hover:text-pink">Shop</a>
+        <a href="/about/about.html" data-t="nav_about" class="hover:text-pink">About</a>
+      </div>
+    </div>
+  </nav>
+
+<main class="about-container">
+  <div class="about-header">
+    <h2 id="about-title">The Lunaglow Story</h2>
+    <p style="color: var(--gray); font-size: 1.2rem;">Where nature meets high-performance beauty.</p>
+  </div>
+  
+  <div class="about-grid">
+    <div class="about-text">
+      <h3>Our Mission</h3>
+      <p>Founded on the belief that beauty should be as kind as it is effective, Lunaglow was born to create the "soft aura" effect without harsh chemicals.</p>
+      <p>We source ethically, focusing on plant-based dews and mineral pigments. Everything is vegan, cruelty-free, and designed for your glow.</p>
+      <a href="/index.html" class="btn-shop">Back to Shop</a>
+    </div>
+    <div class="about-img" style="background: #fdf2f8;">🌙</div>
+  </div>
+
+  <div class="about-grid">
+    <div class="about-img" style="background: #f7e6d8;">✨</div>
+    <div class="about-text">
+      <h3>Pure Ingredients</h3>
+      <p>From rose quartz extracts to organic petal infusions, our formulas are tested for sensitivity and performance. We believe in transparency and radiance.</p>
+      <p>Join us in our journey toward a more luminous, conscious world of cosmetics.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="bg-white text-black py-16 mt-20 border-t border-pink-soft">
+    <div class="container mx-auto px-8 text-center">
+        <h3 class="text-2xl font-bold text-pink mb-4">Lunaglow</h3>
+        <p class="text-gray-400 text-sm">© 2026 Lunaglow Cosmetics. All Rights Reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>

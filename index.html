@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title id="page-title">Lunaglow — Cosmetics</title>
+
+  <!-- Icons & Fonts -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --white: #ffffff;
+      --pink: #ff8fb1;
+      --pink-soft: #fff0f6;
+      --pink-dark: #e07a99;
+      --black: #1c1c1c;
+      --gray: #777777;
+      --border: rgba(0,0,0,.08);
+      --shadow: 0 10px 30px rgba(255, 143, 177, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; scroll-behavior: smooth; }
+    body { 
+        font-family: 'Poppins', 'Noto Sans Arabic', sans-serif; 
+        background: var(--white); 
+        color: var(--black); 
+        overflow-x: hidden;
+    }
+
+    [dir="rtl"] { font-family: 'Noto Sans Arabic', sans-serif; }
+
+    nav { 
+      background: rgba(255, 255, 255, 0.95); 
+      backdrop-filter: blur(15px); 
+      position: sticky; top: 0; z-index: 1000; 
+      border-bottom: 1px solid var(--border);
+    }
+
+    .product-card {
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border: 1px solid var(--pink-soft);
+    }
+    .product-card:hover {
+      transform: translateY(-10px);
+      box-shadow: var(--shadow);
+      border-color: var(--pink);
+    }
+    .product-img { background: var(--pink-soft); border-radius: 20px; position: relative; overflow: hidden; height: 250px; width: 250px; align-self: center; }
+    .product-img img { width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease; }
+    .product-card:hover .product-img img { transform: scale(1.06); }
+    .product-img .no-img { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4.5rem;transition:transform 0.3s ease; }
+    .product-card:hover .product-img .no-img { transform: scale(1.1) rotate(5deg); }
+
+    #cart-drawer {
+      position: fixed; top: 0; right: -100%; width: 420px; height: 100%;
+      background: white; z-index: 2000; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+    }
+    [dir="rtl"] #cart-drawer { right: auto; left: -100%; }
+    #cart-drawer.active { right: 0; }
+    [dir="rtl"] #cart-drawer.active { left: 0; }
+
+    #cart-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.3); z-index: 1500; display: none;
+      backdrop-filter: blur(4px);
+    }
+    #cart-overlay.active { display: block; }
+
+    .btn-pink { background: var(--pink); color: white; border-radius: 14px; transition: 0.3s; cursor: pointer; text-align: center; border: none; }
+    .btn-pink:hover { background: var(--pink-dark); transform: scale(1.02); }
+
+    .filter-btn {
+      padding: 8px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: 0.3s;
+      border: 2px solid transparent;
+      white-space: nowrap;
+    }
+    .filter-btn.active {
+      background: var(--pink);
+      color: white;
+    }
+    .filter-btn:not(.active) {
+      background: var(--pink-soft);
+      color: var(--pink);
+    }
+
+    .search-container {
+        position: relative;
+        max-width: 500px;
+        margin: 0 auto 2rem;
+    }
+    .search-input {
+        width: 100%;
+        padding: 16px 24px 16px 50px;
+        border-radius: 50px;
+        border: 2px solid var(--pink-soft);
+        outline: none;
+        transition: 0.3s;
+        font-weight: 500;
+    }
+    [dir="rtl"] .search-input {
+        padding: 16px 50px 16px 24px;
+    }
+    .search-input:focus {
+        border-color: var(--pink);
+        box-shadow: 0 5px 15px rgba(255, 143, 177, 0.1);
+    }
+    .search-icon {
+        position: absolute;
+        top: 50%;
+        left: 20px;
+        transform: translateY(-50%);
+        color: var(--pink);
+        pointer-events: none;
+    }
+    [dir="rtl"] .search-icon {
+        left: auto;
+        right: 20px;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: var(--black); color: white; padding: 12px 24px; border-radius: 50px;
+      z-index: 3000; transition: transform 0.3s ease;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    @keyframes bump {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    .bump { animation: bump 0.3s ease-out; }
+
+    #cart-count {
+      position: absolute; top: -5px; right: -5px;
+      background: #ff4d4d; color: white; font-size: 11px; font-weight: bold;
+      min-width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items:center; justify-content: center;
+      border: 2px solid white; pointer-events: none;
+    }
+
+    @media (max-width: 500px) { #cart-drawer { width: 100%; } }
+  </style>
+</head>
+<body>
+
+  <nav class="py-4 px-6 md:px-12 flex justify-between items-center">
+    <div class="flex items-center gap-10">
+      <h1 class="text-2xl font-bold text-pink tracking-tight">Lunaglow</h1>
+      <div class="hidden md:flex gap-8 text-sm font-medium text-gray-500">
+        <a href="#products" data-t="nav_shop" class="hover:text-pink">Shop</a>
+        <a href="#" data-t="nav_about" class="hover:text-pink">About</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <button id="lang-switch" onclick="toggleLanguage()" class="px-4 py-2 rounded-full bg-pink-soft text-pink font-bold">العربية</button>
+      <div class="relative">
+        <button id="cart-btn" class="p-3 bg-pink-soft rounded-full text-pink hover:bg-pink hover:text-white transition-all">
+          <i class="fa-solid fa-bag-shopping text-xl"></i>
+        </button>
+        <span id="cart-count">0</span>
+      </div>
+    </div>
+  </nav>
+
+  <header class="py-16 px-6 text-center max-w-4xl mx-auto">
+    <span data-t="hero_badge" class="inline-block py-2 px-4 bg-pink-soft text-pink rounded-full text-xs font-bold tracking-widest uppercase mb-6">Skin-First Formulas</span>
+    <h2 class="text-5xl md:text-7xl font-bold leading-tight mb-8" id="hero-title">Reveal Your Inner <span class="text-pink italic">Soft Aura</span></h2>
+    <p data-t="hero_desc" class="text-gray-500 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Clean, vegan cosmetics designed to give you that moon-lit glow, naturally.</p>
+  </header>
+
+  <section id="products" class="px-6 md:px-12 pb-20">
+    
+    <!-- Search Bar -->
+    <div class="search-container">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="product-search" class="search-input" data-tp="search_placeholder" placeholder="Search products..." oninput="handleSearch()">
+    </div>
+
+    <!-- Category Filters -->
+    <div class="flex justify-center gap-4 mb-12 flex-wrap">
+      <button class="filter-btn active" onclick="filterProducts('all')" data-category="all">All</button>
+      <button class="filter-btn" onclick="filterProducts('skincare')" data-category="skincare">Skincare</button>
+      <button class="filter-btn" onclick="filterProducts('makeup')" data-category="makeup">Makeup</button>
+      <button class="filter-btn" onclick="filterProducts('tools')" data-category="tools">Tools</button>
+    </div>
+
+    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
+  </section>
+
+  <!-- Packages Section -->
+  <section id="packages-section" class="px-6 md:px-12 pb-20" style="display:none">
+    <div class="text-center mb-10">
+      <span class="inline-block py-2 px-4 bg-pink-soft text-pink rounded-full text-xs font-bold tracking-widest uppercase mb-4">Special Deals</span>
+      <h2 class="text-3xl md:text-4xl font-bold">Product <span class="text-pink italic">Packages</span></h2>
+    </div>
+    <div id="packages-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+  </section>
+
+  <footer class="bg-white text-black py-16 border-t border-pink-soft">
+      <div class="container mx-auto px-8 text-center">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12 pb-12 border-b border-pink-soft">
+              <div>
+                  <h4 data-t="footer_call" class="text-lg font-bold mb-2">Call Us</h4>
+                  <p dir="ltr" class="text-gray-500">+970 590 000 000</p>
+              </div>
+              <div>
+                  <h4 data-t="footer_email" class="text-lg font-bold mb-2">Email Us</h4>
+                  <p class="text-gray-500"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="87ebf2e9e6e0ebe8f0c7e2eae6eeeba9e4e8ea">[email&#160;protected]</a></p>
+              </div>
+          </div>
+          <p class="text-sm text-gray-400">© 2026 Lunaglow Cosmetics.</p>
+      </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast">Added to bag! ✨</div>
+
+  <!-- Cart Sidebar -->
+  <div id="cart-overlay"></div>
+  <aside id="cart-drawer" class="flex flex-col">
+    <div class="p-6 flex justify-between items-center border-b border-pink-soft">
+      <h2 data-t="cart_title" class="text-xl font-bold">Your Bag</h2>
+      <div class="flex items-center gap-3">
+        <!-- Promo toggle -->
+        <div class="relative">
+          <button id="promo-toggle" title="Promo code" class="w-9 h-9 flex items-center justify-center rounded-full bg-pink-soft text-pink hover:bg-pink hover:text-white transition-all">
+            <i class="fa-solid fa-tag text-sm"></i>
+          </button>
+          <div id="promo-popup" class="absolute right-0 top-12 bg-white border border-pink-soft rounded-2xl shadow-xl p-3 z-10 hidden" style="width:280px">
+            <div class="flex gap-2 mb-2">
+              <input id="promo-input" type="text" placeholder="Promo code" class="flex-grow p-2 border rounded-xl outline-none focus:border-pink text-sm font-medium" />
+              <button id="promo-btn" class="btn-pink px-3 py-2 text-xs font-bold rounded-xl">Apply</button>
+            </div>
+            <div id="promo-msg" class="text-xs font-semibold" style="display:none"></div>
+          </div>
+        </div>
+        <button id="close-cart" class="text-gray-400 hover:text-black"><i class="fa-solid fa-xmark text-2xl"></i></button>
+      </div>
+    </div>
+    <div id="cart-items" class="flex-grow overflow-y-auto p-6 space-y-6"></div>
+    <div class="p-6 border-t border-pink-soft bg-gray-50">
+      <div class="flex justify-between items-center mb-2">
+        <span data-t="cart_subtotal" class="text-gray-500 font-medium">Subtotal</span>
+        <span id="cart-total" class="text-2xl font-bold text-pink">₪0.00</span>
+      </div>
+      <!-- Promo discount row -->
+      <div id="promo-discount-row" class="flex justify-between items-center mb-3" style="display:none">
+        <span class="text-gray-500 text-sm">Discount <span id="promo-label" class="text-pink font-bold"></span></span>
+        <span id="promo-discount-val" class="font-bold text-green-500"></span>
+      </div>
+      <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-sm">Total</span>
+        <span id="cart-final" class="text-2xl font-bold text-pink">₪0.00</span>
+      </div>
+      <div class="space-y-3 mb-4">
+        <input id="checkout-name" class="w-full p-4 border rounded-2xl focus:ring-2 focus:ring-pink outline-none" type="text" data-tp="placeholder_name" placeholder="Full Name" />
+        <input id="checkout-phone" class="w-full p-4 border rounded-2xl focus:ring-2 focus:ring-pink outline-none" type="tel" data-tp="placeholder_phone" placeholder="Phone Number" />
+        <input id="checkout-address" class="w-full p-4 border rounded-2xl focus:ring-2 focus:ring-pink outline-none" type="text" data-tp="placeholder_addr" placeholder="Detailed Address" />
+      </div>
+      <button id="checkout-btn" data-t="cart_checkout" class="w-full btn-pink py-4 font-bold text-lg shadow-xl shadow-pink/30">Complete Purchase</button>
+    </div>
+  </aside>
+
+  <!-- Language Picker Modal -->
+  <div id="lang-modal" class="fixed inset-0 flex items-center justify-center z-[3000] hidden">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-xl"></div>
+    <div class="bg-white p-10 md:p-14 rounded-[40px] relative max-w-lg text-center mx-4 border border-pink-soft">
+      <div class="text-5xl mb-8">✨</div>
+      <h3 class="text-2xl font-bold mb-10">Choose language / اختر اللغة</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="setInitialLanguage('en')" class="btn-pink py-5 text-xl font-bold">English</button>
+        <button onclick="setInitialLanguage('ar')" class="bg-pink-soft text-pink py-5 text-xl font-bold rounded-2xl border-2 border-pink">العربية</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div id="success-modal" class="fixed inset-0 flex items-center justify-center z-[2000] hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+    <div class="bg-white p-10 rounded-[40px] relative max-sm text-center mx-4 border-2 border-pink-soft">
+      <div class="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">✓</div>
+      <h3 id="modal-title" class="text-2xl font-bold mb-2">Order Confirmed!</h3>
+      <p id="modal-desc" class="text-gray-500 mb-8">We have received your order and will contact you shortly.</p>
+      <button onclick="closeSuccess()" id="modal-btn" class="btn-pink px-8 py-3 w-full">Done</button>
+    </div>
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div id="product-modal" class="fixed inset-0 flex items-center justify-center z-[2500] hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeProductModal()"></div>
+    <div class="bg-white rounded-[32px] relative mx-4 overflow-hidden" style="max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+      <button onclick="closeProductModal()" class="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/80 text-gray-400 hover:text-black shadow"><i class="fa-solid fa-xmark"></i></button>
+      <div class="w-full bg-pink-soft" style="height:280px;overflow:hidden">
+        <img id="modal-img" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none">
+        <div id="modal-img-fallback" class="w-full h-full flex items-center justify-center text-7xl">🛍️</div>
+      </div>
+      <div class="p-6" id="modal-content">
+        <span id="modal-category" class="text-xs font-bold uppercase tracking-widest text-pink bg-pink-soft px-3 py-1 rounded-full"></span>
+        <h2 id="modal-name" class="text-2xl font-bold mt-3 mb-2"></h2>
+        <div id="modal-price-wrap" class="mb-4"></div>
+        <p id="product-modal-desc" class="text-gray-500 text-sm leading-relaxed mb-6" style="display:none"></p>
+        <button id="modal-add-btn" class="w-full btn-pink py-4 font-bold text-lg">Add to Bag</button>
+      </div>
+    </div>
+  </div>
+
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+    // ─── SUPABASE CONFIG ─────────────────────────────────────
+    const SB_URL = 'https://bqqttadepdwiqwhngmyg.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxcXR0YWRlcGR3aXF3aG5nbXlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMzMyMTksImV4cCI6MjA4ODYwOTIxOX0.fUAyTtYzC-cLH9lwZL84Cpobvy_p3GvYR1fLhvUFkZ4';
+    const SB_H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+
+    function fromRow(r) {
+      const p = { id: r.id, nameen: r.nameen, namear: r.namear, category: r.category, price: Number(r.price), imgUrl: r.img_url || '', description: r.description || '', descriptionAr: r.description_ar || '' };
+      if (r.sale_price != null) { p.salePrice = Number(r.sale_price); p.saleDiscount = r.sale_discount; }
+      return p;
+    }
+
+    const $ = q => document.querySelector(q);
+
+    let currentLang = 'en';
+    let currentCategory = 'all';
+    let searchTerm = '';
+
+    const translations = {
+        en: {
+            nav_shop: "Shop", nav_about: "About", hero_badge: "Skin-First Formulas",
+            hero_title: 'Reveal Your Inner <span class="text-pink italic">Soft Aura</span>',
+            hero_desc: "Clean, vegan cosmetics designed to give you that moon-lit glow, naturally.",
+            footer_call: "Call Us", footer_email: "Email Us",
+            cart_title: "Your Bag", cart_subtotal: "Subtotal", cart_checkout: "Complete Purchase", 
+            cart_empty: "Your bag is empty", placeholder_name: "Full Name", 
+            placeholder_phone: "Phone Number", placeholder_addr: "Detailed Address",
+            modal_title: "Order Confirmed!", modal_desc: "We have received your order.",
+            modal_btn: "Done", sending: "Sending...", add_btn: "Add to Bag", currency: "₪",
+            toast_added: "Added to bag! ✨", search_placeholder: "Search products...",
+            no_results: "No products found matching your search."
+        },
+        ar: {
+            nav_shop: "المتجر", nav_about: "من نحن", hero_badge: "تركيبات تعتني بالبشرة",
+            hero_title: 'أبرزي <span class="text-pink italic">هالتك الناعمة</span>',
+            hero_desc: "مستحضرات تجميل نباتية ونظيفة مصممة لتمنحك توهجاً طبيعياً كضوء القمر.",
+            footer_call: "اتصلي بنا", footer_email: "راسلنا",
+            cart_title: "حقيبة التسوق", cart_subtotal: "المجموع الفرعي", cart_checkout: "إتمام عملية الشراء", 
+            cart_empty: "حقيبتك فارغة حالياً", placeholder_name: "الاسم الكامل", 
+            placeholder_phone: "رقم الهاتف", placeholder_addr: "العنوان بالتفصيل",
+            modal_title: "تم تأكيد الطلب!", modal_desc: "لقد استلمنا طلبك بنجاح.",
+            modal_btn: "تم", sending: "جاري الإرسال...", add_btn: "أضف للحقيبة", currency: "₪",
+            toast_added: "تمت الإضافة للحقيبة! ✨", search_placeholder: "ابحث عن المنتجات...",
+            no_results: "لم يتم العثور على منتجات تطابق بحثك."
+        }
+    };
+
+    let products = [];
+    let packages = [];
+    let cart = [];
+    let appliedPromo = null;
+
+    async function applyPromo() {
+      const code = $("#promo-input").value.trim().toUpperCase();
+      const msg = $("#promo-msg");
+      if (!code) return;
+      try {
+        const rows = await fetch(`${SB_URL}/rest/v1/promo_codes?code=eq.${encodeURIComponent(code)}&select=*`, { headers: SB_H }).then(r => r.json());
+        if (!rows.length) {
+          appliedPromo = null;
+          msg.style.display = 'block';
+          msg.style.color = '#e53e3e';
+          msg.textContent = '❌ Invalid promo code';
+          document.getElementById('promo-discount-row').style.display = 'none';
+        } else {
+          appliedPromo = rows[0];
+          msg.style.display = 'block';
+          msg.style.color = '#38a169';
+          msg.textContent = `✅ Code applied! ${appliedPromo.type === 'percent' ? appliedPromo.value + '% off' : '₪' + appliedPromo.value + ' off'}`;
+          setTimeout(() => document.getElementById("promo-popup").classList.add("hidden"), 1000);
+        }
+      } catch(e) {
+        msg.style.display = 'block';
+        msg.style.color = '#e53e3e';
+        msg.textContent = '⚠️ Could not verify code';
+      }
+      renderCart();
+    }
+
+    async function init() {
+      try {
+        const rows = await fetch(`${SB_URL}/rest/v1/products?select=*&order=created_at.asc`, { headers: SB_H }).then(r => r.json());
+        if (rows?.length) products = rows.map(fromRow);
+      } catch(e) { console.error('Supabase load failed', e); }
+      try {
+        const pkgRows = await fetch(`${SB_URL}/rest/v1/packages?select=*&order=created_at.asc`, { headers: SB_H }).then(r => r.json());
+        if (pkgRows?.length) packages = pkgRows;
+      } catch(e) { console.error('Packages load failed', e); }
+      updateUI();
+      if (!localStorage.getItem('lunaglow_lang_set')) {
+        $("#lang-modal").classList.remove("hidden");
+      }
+    }
+
+    // wire up event-based handlers that need DOM ready
+    $("#cart-btn").onclick = () => { $("#cart-drawer").classList.add("active"); $("#cart-overlay").classList.add("active"); };
+    $("#close-cart").onclick = () => { $("#cart-drawer").classList.remove("active"); $("#cart-overlay").classList.remove("active"); };
+    document.getElementById("cart-overlay").onclick = () => { $("#cart-drawer").classList.remove("active"); $("#cart-overlay").classList.remove("active"); };
+    document.getElementById("promo-btn").addEventListener("click", applyPromo);
+    document.getElementById("promo-input").addEventListener("keydown", e => { if (e.key === "Enter") applyPromo(); });
+    document.getElementById("promo-toggle").addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.getElementById("promo-popup").classList.toggle("hidden");
+    });
+    document.getElementById("promo-popup").addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", () => document.getElementById("promo-popup").classList.add("hidden"));
+
+    function toggleLanguage() { applyLanguage(currentLang === 'en' ? 'ar' : 'en'); }
+
+    function setInitialLanguage(lang) {
+      applyLanguage(lang);
+      localStorage.setItem('lunaglow_lang_set', 'true');
+      $("#lang-modal").classList.add("hidden");
+    }
+    
+    function applyLanguage(lang) {
+        currentLang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        $("#lang-switch").textContent = lang === 'en' ? 'العربية' : 'English';
+        updateUI();
+    }
+
+    function updateUI() {
+        const t = translations[currentLang];
+        document.querySelectorAll('[data-t]').forEach(el => { el.innerHTML = t[el.getAttribute('data-t')]; });
+        document.querySelectorAll('[data-tp]').forEach(el => { el.placeholder = t[el.getAttribute('data-tp')]; });
+        $("#hero-title").innerHTML = t.hero_title;
+        renderProducts();
+        renderPackages();
+        renderCart();
+    }
+
+    function renderPackages() {
+      const section = document.getElementById('packages-section');
+      const grid = document.getElementById('packages-grid');
+      if (!packages.length) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      const t = translations[currentLang];
+      grid.innerHTML = packages.map(pkg => {
+        const ids = pkg.product_ids || [];
+        const pkgProducts = ids.map(id => products.find(p => p.id === id)).filter(Boolean);
+        const imgs = pkgProducts.slice(0, 4).map(p => p.imgUrl
+          ? `<img src="${p.imgUrl}" style="width:60px;height:60px;border-radius:12px;object-fit:cover;border:2px solid white">`
+          : `<span style="width:60px;height:60px;border-radius:12px;background:var(--pink-soft);display:flex;align-items:center;justify-content:center;font-size:1.5rem;border:2px solid white">🛍️</span>`
+        ).join('');
+        const originalTotal = pkgProducts.reduce((a, p) => a + (p.salePrice ?? p.price), 0);
+        const savings = originalTotal - pkg.price;
+        return `
+        <div class="product-card p-5 rounded-[24px] bg-white flex flex-col" style="border:2px solid var(--pink-soft)">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;min-height:70px;align-items:center">${imgs}</div>
+          ${savings > 0 ? `<div style="text-align:center;margin-bottom:8px"><span style="background:#fff1f1;color:#ff6b6b;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:50px">Save ₪${savings.toFixed(0)}!</span></div>` : ''}
+          <h3 class="font-bold text-lg mb-1 text-center">${currentLang === 'en' ? pkg.nameen : pkg.namear}</h3>
+          <p style="font-size:.8rem;color:var(--gray);text-align:center;margin-bottom:12px">${pkgProducts.map(p => currentLang === 'en' ? p.nameen : p.namear).join(' + ')}</p>
+          ${savings > 0 ? `<p class="text-center mb-3"><span style="text-decoration:line-through;color:#aaa;font-size:.95rem">₪${originalTotal.toFixed(0)}</span></p>` : ''}
+          <p class="text-pink font-bold text-2xl text-center mb-4">₪${pkg.price}</p>
+          <button onclick="addPackageToCart(${pkg.id})" class="w-full py-3.5 bg-black text-white rounded-2xl font-bold hover:bg-pink transition-all">${t.add_btn}</button>
+        </div>`;
+      }).join('');
+    }
+
+    function addPackageToCart(pkgId) {
+      const pkg = packages.find(x => x.id === pkgId);
+      if (!pkg) return;
+      const pkgProducts = (pkg.product_ids || []).map(id => products.find(p => p.id === id)).filter(Boolean);
+      const existsPkg = cart.find(x => x._isPkg && x.id === `pkg_${pkgId}`);
+      if (!existsPkg) {
+        cart.push({
+          id: `pkg_${pkgId}`, _isPkg: true,
+          nameen: pkg.nameen, namear: pkg.namear,
+          imgUrl: pkgProducts[0]?.imgUrl || '',
+          effectivePrice: Number(pkg.price), qty: 1,
+          category: 'package',
+          _productIds: pkg.product_ids
+        });
+      } else {
+        existsPkg.qty++;
+      }
+      const counter = $("#cart-count");
+      counter.classList.remove('bump');
+      void counter.offsetWidth;
+      counter.classList.add('bump');
+      renderCart();
+      showToast();
+    }
+
+    window.addPackageToCart = addPackageToCart;
+
+    function handleSearch() {
+        searchTerm = $("#product-search").value.toLowerCase();
+        renderProducts();
+    }
+
+    function filterProducts(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === cat);
+        });
+        renderProducts();
+    }
+
+    function renderProducts() {
+      let filtered = currentCategory === 'all' ? products : products.filter(p => p.category === currentCategory);
+      
+      if (searchTerm) {
+          filtered = filtered.filter(p => 
+            p.nameen.toLowerCase().includes(searchTerm) || 
+            p.namear.includes(searchTerm)
+          );
+      }
+
+      const grid = $("#product-grid");
+      if (filtered.length === 0) {
+          grid.innerHTML = `<div class="col-span-full py-20 text-center opacity-50"><i class="fa-solid fa-face-frown text-4xl mb-4"></i><p>${translations[currentLang].no_results}</p></div>`;
+          return;
+      }
+
+      grid.innerHTML = filtered.map(p => `
+        <div class="product-card p-4 rounded-[24px] bg-white flex flex-col" onclick="openProductModal(${p.id})" style="cursor:pointer">
+          <div class="product-img flex items-center justify-center mb-4">${p.imgUrl ? `<img src="${p.imgUrl}" alt="${p.nameen}">` : `<div class="no-img">🛍️</div>`}</div>
+          <div class="flex-grow">
+            <h3 class="font-bold text-lg mb-1">${currentLang === 'en' ? p.nameen : p.namear}</h3>
+            ${p.salePrice != null
+              ? `<p class="mb-4"><span style="text-decoration:line-through;color:#aaa;font-size:1rem;font-weight:500">${translations[currentLang].currency}${p.price}</span> <span class="text-pink font-bold text-2xl">${translations[currentLang].currency}${p.salePrice}</span> <span style="background:#fff1f1;color:#ff6b6b;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:50px;margin-left:4px">${p.saleDiscount}% OFF</span></p>`
+              : `<p class="text-pink font-bold text-2xl mb-4">${translations[currentLang].currency}${p.price}</p>`
+            }
+          </div>
+          <button onclick="event.stopPropagation(); addToCart(${p.id})" class="w-full py-3.5 bg-black text-white rounded-2xl font-bold hover:bg-pink transition-all">
+            ${translations[currentLang].add_btn}
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function showToast() {
+        const t = $("#toast");
+        t.textContent = translations[currentLang].toast_added;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    function addToCart(id) {
+      const p = products.find(x => x.id === id);
+      const exists = cart.find(x => x.id === id);
+      const effectivePrice = p.salePrice != null ? p.salePrice : p.price;
+      if(exists) exists.qty++; else cart.push({...p, effectivePrice, qty: 1});
+      
+      const counter = $("#cart-count");
+      counter.classList.remove('bump');
+      void counter.offsetWidth; 
+      counter.classList.add('bump');
+
+      renderCart();
+      showToast();
+    }
+
+    function renderCart() {
+      const list = $("#cart-items");
+      const t = translations[currentLang];
+      const count = cart.reduce((a, b) => a + b.qty, 0);
+      
+      const counterEl = $("#cart-count");
+      counterEl.textContent = count;
+      counterEl.style.display = count > 0 ? "flex" : "none";
+      
+      if(cart.length === 0) { 
+          list.innerHTML = `<div class='h-full flex flex-col items-center justify-center opacity-40 py-20'><i class='fa-solid fa-cart-shopping text-4xl mb-4'></i><p>${t.cart_empty}</p></div>`; 
+          $("#cart-total").textContent = t.currency + "0.00";
+          $("#cart-final").textContent = t.currency + "0.00"; 
+          return; 
+      }
+      list.innerHTML = cart.map(i => {
+        if (i._isPkg) {
+          const pkg = packages.find(x => x.id === Number(String(i.id).replace('pkg_', '')));
+          const ids = pkg?.product_ids || [];
+          const pkgProducts = ids.map(id => products.find(p => p.id === id)).filter(Boolean);
+          const lines = pkgProducts.map(p => `<p class="text-xs text-gray-500">1× ${currentLang === 'en' ? p.nameen : p.namear}</p>`).join('');
+          return `
+          <div class="p-3 rounded-2xl bg-pink-soft/30 border border-pink-soft">
+            <div class="flex justify-between items-start">
+              <div class="flex items-center gap-3">
+                ${i.imgUrl ? `<img src="${i.imgUrl}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0">` : `<span class="text-2xl">📦</span>`}
+                <div>
+                  <p class="font-bold text-sm">${currentLang === 'en' ? i.nameen : i.namear}</p>
+                  <div class="mt-1">${lines}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 flex-shrink-0 ml-2">
+                <p class="font-bold text-pink">${t.currency}${i.effectivePrice * i.qty}</p>
+                <button onclick="removeFromCart('${i.id}')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-100 text-red-400">×</button>
+              </div>
+            </div>
+          </div>`;
+        }
+        return `
+        <div class="flex justify-between items-center p-3 rounded-2xl bg-pink-soft/30 border border-pink-soft">
+          <div class="flex items-center gap-3">
+            ${i.imgUrl
+              ? `<img src="${i.imgUrl}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0">`
+              : `<span class="text-2xl">🛍️</span>`}
+            <div><p class="font-bold text-sm">${currentLang === 'en' ? i.nameen : i.namear}</p><p class="text-xs text-gray-500">Qty: ${i.qty}</p></div>
+          </div>
+          <div class="flex items-center gap-4">
+            <p class="font-bold text-pink">${t.currency}${i.effectivePrice * i.qty}</p>
+            <button onclick="removeFromCart(${i.id})" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-100 text-red-400">×</button>
+          </div>
+        </div>`;
+      }).join('');
+      const subtotal = cart.reduce((a, b) => a + (b.effectivePrice * b.qty), 0);
+      $("#cart-total").textContent = `${t.currency}${subtotal}.00`;
+      // promo discount
+      let discount = 0;
+      if (appliedPromo) {
+        discount = appliedPromo.type === 'percent'
+          ? Math.round(subtotal * appliedPromo.value / 100)
+          : Math.min(Number(appliedPromo.value), subtotal);
+        document.getElementById('promo-discount-row').style.display = 'flex';
+        document.getElementById('promo-label').textContent = `(${appliedPromo.code})`;
+        document.getElementById('promo-discount-val').textContent = `-${t.currency}${discount}`;
+      } else {
+        document.getElementById('promo-discount-row').style.display = 'none';
+      }
+      const final = subtotal - discount;
+      $("#cart-final").textContent = `${t.currency}${final}.00`;
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function closeSuccess() {
+        $("#success-modal").classList.add("hidden");
+    }
+
+    $("#checkout-btn").onclick = async function() {
+      const t = translations[currentLang];
+      const name = $("#checkout-name").value.trim();
+      const phone = $("#checkout-phone").value.trim();
+      const addr = $("#checkout-address").value.trim();
+
+      if(!name || !phone || !addr || cart.length === 0) {
+        alert(currentLang === 'en' ? "Please fill all fields" : "يرجى ملء جميع الحقول");
+        return;
+      }
+
+      this.disabled = true;
+      const originalText = this.textContent;
+      this.textContent = t.sending;
+
+      const subtotal = cart.reduce((a, b) => a + (b.effectivePrice * b.qty), 0);
+      const discount = appliedPromo
+        ? (appliedPromo.type === 'percent' ? Math.round(subtotal * appliedPromo.value / 100) : Math.min(Number(appliedPromo.value), subtotal))
+        : 0;
+      const totalNum = subtotal - discount;
+
+      try {
+        await fetch('/.netlify/functions/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, address: addr, items: cart, total: totalNum })
+        });
+
+        // save order to Supabase for admin dashboard
+        try {
+          await fetch(`${SB_URL}/rest/v1/orders`, {
+            method: 'POST',
+            headers: { ...SB_H, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+              name, phone, address: addr,
+              items: cart.map(i => ({ id: i.id, nameen: i.nameen, imgUrl: i.imgUrl || '', category: i.category, price: i.price, effectivePrice: i.effectivePrice, qty: i.qty })),
+              total: totalNum
+            })
+          });
+        } catch(e) { console.error('Order save failed', e); }
+
+        $("#success-modal").classList.remove("hidden");
+        cart = [];
+        appliedPromo = null;
+        $("#promo-input").value = '';
+        $("#promo-msg").style.display = 'none';
+        document.getElementById('promo-discount-row').style.display = 'none';
+        renderCart();
+        $("#cart-drawer").classList.remove("active");
+        $("#cart-overlay").classList.remove("active");
+        $("#checkout-name").value = "";
+        $("#checkout-phone").value = "";
+        $("#checkout-address").value = "";
+      } catch (err) { 
+        alert("Error sending order. Please try again."); 
+      } finally { 
+        this.disabled = false; 
+        this.textContent = t.cart_checkout; 
+      }
+    };
+
+    // expose to global for inline onclick handlers
+    function openProductModal(id) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      console.log('modal product:', p);
+      const t = translations[currentLang];
+      const img = document.getElementById('modal-img');
+      const fallback = document.getElementById('modal-img-fallback');
+      if (p.imgUrl) { img.src = p.imgUrl; img.style.display = ''; fallback.style.display = 'none'; }
+      else { img.style.display = 'none'; fallback.style.display = ''; }
+      document.getElementById('modal-category').textContent = p.category;
+      document.getElementById('modal-name').textContent = currentLang === 'en' ? p.nameen : p.namear;
+      const descEl = document.getElementById('product-modal-desc');
+      const desc = currentLang === 'ar' ? (p.descriptionAr || p.description) : p.description;
+      if (desc) { descEl.textContent = desc; descEl.style.display = ''; }
+      else { descEl.style.display = 'none'; }
+      document.getElementById('modal-price-wrap').innerHTML = p.salePrice != null
+        ? `<span style="text-decoration:line-through;color:#aaa;font-size:1rem;font-weight:500">${t.currency}${p.price}</span> <span class="text-pink font-bold text-2xl">${t.currency}${p.salePrice}</span> <span style="background:#fff1f1;color:#ff6b6b;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:50px;margin-left:4px">${p.saleDiscount}% OFF</span>`
+        : `<span class="text-pink font-bold text-2xl">${t.currency}${p.price}</span>`;
+      document.getElementById('modal-add-btn').textContent = t.add_btn;
+      document.getElementById('modal-add-btn').onclick = () => { addToCart(id); closeProductModal(); };
+      document.getElementById('modal-content').dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+      document.getElementById('product-modal').classList.remove('hidden');
+    }
+
+    function closeProductModal() {
+      document.getElementById('product-modal').classList.add('hidden');
+    }
+
+    window.toggleLanguage = toggleLanguage;
+    window.openProductModal = openProductModal;
+    window.closeProductModal = closeProductModal;
+    window.setInitialLanguage = setInitialLanguage;
+    window.applyPromo = applyPromo;
+    window.handleSearch = handleSearch;
+    window.filterProducts = filterProducts;
+    window.addToCart = addToCart;
+    window.removeFromCart = removeFromCart;
+    window.closeSuccess = closeSuccess;
+
+    init();
+  </script>
+</body>
+</html>
