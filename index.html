@@ -275,12 +275,27 @@
   <!-- Language Picker Modal -->
   <div id="lang-modal" class="fixed inset-0 flex items-center justify-center z-[3000] hidden">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-xl"></div>
-    <div class="bg-white p-10 md:p-14 rounded-[40px] relative max-w-lg text-center mx-4 border border-pink-soft">
-      <div class="text-5xl mb-8">✨</div>
-      <h3 class="text-2xl font-bold mb-10">Choose language / اختر اللغة</h3>
+    <div class="bg-white p-8 md:p-10 rounded-[40px] relative max-w-lg text-center mx-4 border border-pink-soft">
+      <div class="text-5xl mb-6">✨</div>
+      <h3 class="text-2xl font-bold mb-6">Choose language / اختر اللغة</h3>
+
+      <!-- T&C Box -->
+      <div style="background:#fdf6f9;border:1.5px solid var(--pink-soft);border-radius:16px;padding:14px;max-height:140px;overflow-y:auto;text-align:left;margin-bottom:16px;font-size:.78rem;color:#555;line-height:1.6">
+        <p style="font-weight:700;margin-bottom:6px;color:var(--black)">Terms & Conditions / الشروط والأحكام</p>
+        <p><b>EN:</b> By using Lunaglow, you agree that all orders are subject to availability. Prices may change without prior notice. Orders are confirmed via WhatsApp/Telegram. We reserve the right to cancel any order. Personal data is used solely for order processing and is not shared with third parties.</p>
+        <br>
+        <p><b>AR:</b> باستخدامك لـ Lunaglow، فإنك توافق على أن جميع الطلبات تخضع للتوفر. قد تتغير الأسعار دون إشعار مسبق. يتم تأكيد الطلبات عبر واتساب/تيليغرام. نحتفظ بالحق في إلغاء أي طلب. تُستخدم بياناتك الشخصية فقط لمعالجة الطلبات ولا تُشارك مع أطراف ثالثة.</p>
+      </div>
+
+      <!-- Checkbox -->
+      <label style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px;cursor:pointer;font-size:.85rem;font-weight:600">
+        <input type="checkbox" id="tc-checkbox" style="accent-color:var(--pink);width:16px;height:16px;cursor:pointer">
+        I agree / أوافق
+      </label>
+
       <div class="grid grid-cols-2 gap-4">
-        <button onclick="setInitialLanguage('en')" class="btn-pink py-5 text-xl font-bold">English</button>
-        <button onclick="setInitialLanguage('ar')" class="bg-pink-soft text-pink py-5 text-xl font-bold rounded-2xl border-2 border-pink">العربية</button>
+        <button onclick="setInitialLanguage('en')" id="btn-lang-en" class="btn-pink py-5 text-xl font-bold opacity-40 pointer-events-none">English</button>
+        <button onclick="setInitialLanguage('ar')" id="btn-lang-ar" class="bg-pink-soft text-pink py-5 text-xl font-bold rounded-2xl border-2 border-pink opacity-40 pointer-events-none">العربية</button>
       </div>
     </div>
   </div>
@@ -427,7 +442,26 @@
     }
 
     // wire up event-based handlers that need DOM ready
-    $("#cart-btn").onclick = () => { $("#cart-drawer").classList.add("active"); $("#cart-overlay").classList.add("active"); };
+    document.getElementById('tc-checkbox').addEventListener('change', function() {
+      const en = document.getElementById('btn-lang-en');
+      const ar = document.getElementById('btn-lang-ar');
+      if (this.checked) {
+        en.classList.remove('opacity-40', 'pointer-events-none');
+        ar.classList.remove('opacity-40', 'pointer-events-none');
+      } else {
+        en.classList.add('opacity-40', 'pointer-events-none');
+        ar.classList.add('opacity-40', 'pointer-events-none');
+      }
+    });
+
+    $("#cart-btn").onclick = () => {
+      $("#cart-drawer").classList.add("active");
+      $("#cart-overlay").classList.add("active");
+      const saved = JSON.parse(localStorage.getItem('lunaglow_customer') || '{}');
+      if (saved.name) $("#checkout-name").value = saved.name;
+      if (saved.phone) $("#checkout-phone").value = saved.phone;
+      if (saved.address) $("#checkout-address").value = saved.address;
+    };
     $("#close-cart").onclick = () => { $("#cart-drawer").classList.remove("active"); $("#cart-overlay").classList.remove("active"); };
     document.getElementById("cart-overlay").onclick = () => { $("#cart-drawer").classList.remove("active"); $("#cart-overlay").classList.remove("active"); };
     document.getElementById("promo-btn").addEventListener("click", applyPromo);
@@ -707,6 +741,7 @@
           });
         } catch(e) { console.error('Order save failed', e); }
 
+        localStorage.setItem('lunaglow_customer', JSON.stringify({ name, phone, address: addr }));
         $("#success-modal").classList.remove("hidden");
         cart = [];
         appliedPromo = null;
