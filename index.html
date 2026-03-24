@@ -671,7 +671,7 @@
       const totalNum = subtotal - discount;
 
       try {
-        await fetch('/.netlify/functions/order', {
+        await fetch('https://restless-meadow-f3c7.lunaglowstore1996.workers.dev/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, phone, address: addr, items: cart, total: totalNum })
