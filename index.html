@@ -296,6 +296,23 @@
     </div>
   </div>
 
+  <!-- Package Detail Modal -->
+  <div id="package-modal" class="fixed inset-0 flex items-center justify-center z-[2500] hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closePackageModal()"></div>
+    <div class="bg-white rounded-[32px] relative mx-4 overflow-hidden" style="max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+      <button onclick="closePackageModal()" class="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/80 text-gray-400 hover:text-black shadow"><i class="fa-solid fa-xmark"></i></button>
+      <div class="w-full bg-pink-soft flex items-center justify-center gap-3 flex-wrap p-6" style="min-height:160px" id="pkg-modal-imgs"></div>
+      <div class="p-6" id="pkg-modal-content">
+        <span class="text-xs font-bold uppercase tracking-widest text-pink bg-pink-soft px-3 py-1 rounded-full">Bundle</span>
+        <h2 id="pkg-modal-name" class="text-2xl font-bold mt-3 mb-1"></h2>
+        <div id="pkg-modal-products" class="mb-4 mt-2 space-y-2"></div>
+        <div id="pkg-modal-savings" class="mb-3" style="display:none"></div>
+        <div id="pkg-modal-price" class="mb-5"></div>
+        <button id="pkg-modal-add-btn" class="w-full btn-pink py-4 font-bold text-lg">Add to Bag</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Product Detail Modal -->
   <div id="product-modal" class="fixed inset-0 flex items-center justify-center z-[2500] hidden">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeProductModal()"></div>
@@ -463,14 +480,14 @@
         const originalTotal = pkgProducts.reduce((a, p) => a + (p.salePrice ?? p.price), 0);
         const savings = originalTotal - pkg.price;
         return `
-        <div class="product-card p-5 rounded-[24px] bg-white flex flex-col" style="border:2px solid var(--pink-soft)">
+        <div class="product-card p-5 rounded-[24px] bg-white flex flex-col" style="border:2px solid var(--pink-soft);cursor:pointer" onclick="openPackageModal(${pkg.id})">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;min-height:70px;align-items:center">${imgs}</div>
           ${savings > 0 ? `<div style="text-align:center;margin-bottom:8px"><span style="background:#fff1f1;color:#ff6b6b;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:50px">Save ₪${savings.toFixed(0)}!</span></div>` : ''}
           <h3 class="font-bold text-lg mb-1 text-center">${currentLang === 'en' ? pkg.nameen : pkg.namear}</h3>
           <p style="font-size:.8rem;color:var(--gray);text-align:center;margin-bottom:12px">${pkgProducts.map(p => currentLang === 'en' ? p.nameen : p.namear).join(' + ')}</p>
           ${savings > 0 ? `<p class="text-center mb-3"><span style="text-decoration:line-through;color:#aaa;font-size:.95rem">₪${originalTotal.toFixed(0)}</span></p>` : ''}
           <p class="text-pink font-bold text-2xl text-center mb-4">₪${pkg.price}</p>
-          <button onclick="addPackageToCart(${pkg.id})" class="w-full py-3.5 bg-black text-white rounded-2xl font-bold hover:bg-pink transition-all">${t.add_btn}</button>
+          <button onclick="event.stopPropagation(); addPackageToCart(${pkg.id})" class="w-full py-3.5 bg-black text-white rounded-2xl font-bold hover:bg-pink transition-all">${t.add_btn}</button>
         </div>`;
       }).join('');
     }
@@ -711,6 +728,58 @@
     };
 
     // expose to global for inline onclick handlers
+    function openPackageModal(pkgId) {
+      const pkg = packages.find(x => x.id === pkgId);
+      if (!pkg) return;
+      const t = translations[currentLang];
+      const pkgProducts = (pkg.product_ids || []).map(id => products.find(p => p.id === id)).filter(Boolean);
+
+      // images
+      document.getElementById('pkg-modal-imgs').innerHTML = pkgProducts.map(p =>
+        p.imgUrl
+          ? `<img src="${p.imgUrl}" style="width:72px;height:72px;border-radius:14px;object-fit:cover;border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,.1)">`
+          : `<span style="width:72px;height:72px;border-radius:14px;background:white;display:flex;align-items:center;justify-content:center;font-size:2rem">🛍️</span>`
+      ).join('');
+
+      // name
+      document.getElementById('pkg-modal-name').textContent = currentLang === 'en' ? pkg.nameen : pkg.namear;
+
+      // product list
+      document.getElementById('pkg-modal-products').innerHTML = pkgProducts.map(p => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--pink-soft);border-radius:12px">
+          ${p.imgUrl ? `<img src="${p.imgUrl}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">` : `<span style="font-size:1.3rem">🛍️</span>`}
+          <span style="font-size:.88rem;font-weight:600">${currentLang === 'en' ? p.nameen : p.namear}</span>
+          <span style="margin-left:auto;font-size:.82rem;color:var(--gray);text-decoration:line-through">₪${p.salePrice ?? p.price}</span>
+        </div>`).join('');
+
+      // savings
+      const originalTotal = pkgProducts.reduce((a, p) => a + (p.salePrice ?? p.price), 0);
+      const savings = originalTotal - pkg.price;
+      const savingsEl = document.getElementById('pkg-modal-savings');
+      if (savings > 0) {
+        savingsEl.style.display = '';
+        savingsEl.innerHTML = `<span style="background:#fff1f1;color:#ff6b6b;font-size:.8rem;font-weight:700;padding:5px 14px;border-radius:50px">🎉 You save ₪${savings.toFixed(0)} with this bundle!</span>`;
+      } else { savingsEl.style.display = 'none'; }
+
+      // price
+      document.getElementById('pkg-modal-price').innerHTML =
+        savings > 0
+          ? `<span style="text-decoration:line-through;color:#aaa;font-size:1rem;font-weight:500">₪${originalTotal.toFixed(0)}</span> <span class="text-pink font-bold text-3xl">₪${pkg.price}</span>`
+          : `<span class="text-pink font-bold text-3xl">₪${pkg.price}</span>`;
+
+      document.getElementById('pkg-modal-add-btn').textContent = t.add_btn;
+      document.getElementById('pkg-modal-add-btn').onclick = () => { addPackageToCart(pkgId); closePackageModal(); };
+      document.getElementById('pkg-modal-content').dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+      document.getElementById('package-modal').classList.remove('hidden');
+    }
+
+    function closePackageModal() {
+      document.getElementById('package-modal').classList.add('hidden');
+    }
+
+    window.openPackageModal = openPackageModal;
+    window.closePackageModal = closePackageModal;
+
     function openProductModal(id) {
       const p = products.find(x => x.id === id);
       if (!p) return;
